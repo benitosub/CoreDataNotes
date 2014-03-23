@@ -10,8 +10,14 @@
 
 #import "DetailViewController.h"
 
+#define LOAD_DELAYED    1
+
 @interface MasterViewController ()
+
+@property NSMutableArray *notes;
+
 - (void)configureCell:(UITableViewCell *)cell atIndexPath:(NSIndexPath *)indexPath;
+
 @end
 
 @implementation MasterViewController
@@ -37,7 +43,7 @@
 
 - (void)loadRecords
 {
-    NSMutableArray *notes = [NSMutableArray arrayWithArray: @[@{@"id":@1, @"text": @"First note"},
+    _notes = [NSMutableArray arrayWithArray: @[@{@"id":@1, @"text": @"First note"},
                                                               @{@"id":@2, @"text": @"Secon note with a link to http://www.google.de"},
                                                               @{@"id":@3, @"text": @"Third note"},
                                                               @{@"id":@4, @"text": @"Fourth note"},
@@ -78,13 +84,36 @@
     
     /*for(int i=40; i<540; i++)
     {
-        [notes addObject:@{@"id":[NSNumber numberWithInt:i], @"text": @"buffer note"}];
+        [_notes addObject:@{@"id":[NSNumber numberWithInt:i], @"text": @"buffer note"}];
     }*/
     
-    for(NSDictionary *note in notes)
+#if LOAD_DELAYED
+    [self insertNextObject:[NSNumber numberWithInt:0]];
+#else
+    for(NSDictionary *note in _notes)
     {
         [self insertNewObjectWithId:[[note objectForKey:@"id"] intValue] andText:[note objectForKey:@"text"]];
     }
+#endif
+}
+
+- (void)insertNextObject:(NSNumber *)index
+{
+    NSDictionary *note = [_notes objectAtIndex:[index intValue]];
+    
+    NSArray *object = [NSArray arrayWithObjects:[note objectForKey:@"id"], [note objectForKey:@"text"], nil];
+    
+    [self insertObject:object];
+    
+    if([index intValue] + 1 < [_notes count])
+    {
+        [self performSelector:@selector(insertNextObject:) withObject:[NSNumber numberWithInt:[index intValue] + 1] afterDelay:0.15];
+    }
+}
+
+- (void)insertObject:(NSArray *)object
+{
+    [self insertNewObjectWithId:[[object objectAtIndex:0] intValue] andText:[object objectAtIndex:1]];
 }
 
 - (void)didReceiveMemoryWarning
